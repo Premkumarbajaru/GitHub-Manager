@@ -116,7 +116,3 @@ Coverage HTML reports are generated under `client/coverage/` and `server/coverag
 - The application communicates with GitHub via the backend using the authenticated user’s access token
 - All external calls are mocked in tests; no live GitHub calls are required during testing
 - Error handling and validation are implemented both in the service layer and at route level
-
-## License
-
-MIT

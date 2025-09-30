@@ -1,0 +1,341 @@
+import React, { useState, useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { apiService } from '../services/apiService';
+import { useAuth } from '../hooks/useAuth';
+import toast from 'react-hot-toast';
+import { 
+  XMarkIcon,
+  PlusIcon
+} from '@heroicons/react/24/outline';
+
+const CreatePullRequestModal = ({ isOpen, onClose, owner, repo }) => {
+  const { user } = useAuth();
+
+  const queryClient = useQueryClient();
+
+  // Check if user is authenticated
+  useEffect(() => {
+    if (isOpen && !user) {
+      toast.error('Please log in to create pull requests');
+      onClose();
+      window.location.href = '/login';
+    }
+  }, [isOpen, user, onClose]);
+
+  // Fetch repository branches
+  const { data: branches = [], isLoading: branchesLoading } = useQuery(
+    ['branches', owner, repo],
+    () => apiService.getRepositoryBranches(owner, repo),
+    {
+      enabled: isOpen && !!owner && !!repo,
+      staleTime: 2 * 60 * 1000, // 2 minutes
+    }
+  );
+
+  // Create pull request mutation
+  const createPRMutation = useMutation(
+    (pullRequestData) => apiService.createPullRequest(owner, repo, pullRequestData),
+    {
+      onSuccess: (pullRequest) => {
+        toast.success('Pull request created successfully!');
+        onClose();
+        // Reset form
+        setFormData({
+          title: '',
+          body: '',
+          head: '',
+          base: 'main',
+          draft: false
+        });
+        // Invalidate pull requests cache
+        queryClient.invalidateQueries(['pullRequests', owner, repo]);
+      },
+      onError: (error) => {
+        console.error('PR Creation Error:', error);
+        
+        if (error.response?.status === 401) {
+          toast.error('Please log in again. Your session may have expired.');
+          window.location.href = '/login';
+          return;
+        }
+        
+        // Handle all error types with better messages
+        const errorMessage = error.response?.data?.error || error.message || 'Failed to create pull request';
+        
+        if (errorMessage.includes('No commits found') || errorMessage.includes('No commits between')) {
+          toast.error('❌ No commits found between the selected branches.\n\n💡 Solution: Go to GitHub and make some changes to the head branch, then try again.');
+        } else if (errorMessage.includes('already exists')) {
+          toast.error('❌ A pull request already exists for this branch combination.');
+        } else if (errorMessage.includes('permission') || errorMessage.includes('write access')) {
+          toast.error('❌ You do not have permission to create pull requests in this repository.');
+        } else if (errorMessage.includes('does not exist')) {
+          toast.error('❌ One of the specified branches does not exist. Please check the branch names.');
+        } else if (errorMessage.includes('same')) {
+          toast.error('❌ The head and base branches cannot be the same. Please select different branches.');
+        } else if (error.response?.status === 500) {
+          toast.error('❌ Server error occurred. Please try again or check the server logs.');
+        } else {
+          toast.error(`❌ ${errorMessage}`);
+        }
+      }
+    }
+  );
+
+  // Set default title when branch is selected
+  useEffect(() => {
+    if (formData.head && !formData.title) {
+      setFormData(prev => ({
+        ...prev,
+        title: `Add changes from ${formData.head}`
+      }));
+    }
+  }, [formData.head, formData.title]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim() || !formData.head) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (formData.head === formData.base) {
+      toast.error('Head branch and base branch cannot be the same');
+      return;
+    }
+
+    console.log('Submitting PR with data:', formData);
+    createPRMutation.mutate(formData);
+  };
+
+  const handleCreateBranch = () => {
+    if (!newBranchName.trim()) {
+      toast.error('Please enter a branch name');
+      return;
+    }
+
+    // Validate branch name format
+    const branchNameRegex = /^[a-zA-Z0-9._/-]+$/;
+    if (!branchNameRegex.test(newBranchName)) {
+      toast.error('Branch name can only contain letters, numbers, dots, hyphens, underscores, and forward slashes');
+      return;
+    }
+
+    console.log('Creating branch:', {
+      branchName: newBranchName,
+      fromBranch: formData.base,
+      owner,
+      repo
+    });
+
+    createBranchMutation.mutate({
+      branchName: newBranchName,
+      fromBranch: formData.base
+    });
+  };
+
+  const handleQuickFill = () => {
+    // Generate a unique branch name
+    const timestamp = Date.now();
+    const branchName = `feature/hello-world-${timestamp}`;
+    
+    setFormData({
+      title: 'Add Hello World feature',
+      body: `## Description
+This pull request adds a simple "Hello World" feature to the project.
+
+## Changes
+- Added Hello World functionality
+- Updated documentation
+- Added basic tests
+
+## Testing
+- [x] Tested locally
+- [x] All tests pass
+
+## Screenshots
+_Add screenshots if applicable_
+
+## Additional Notes
+This is a basic implementation that can be extended in the future.`,
+      head: branchName,
+      base: formData.base,
+      draft: false
+    });
+    
+    toast.success('Quick fill applied! Please select an existing branch or create one on GitHub first.');
+  };
+
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          {/* Instructions and Quick Fill */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <h4 className="text-sm font-medium text-blue-900 mb-2">📝 How to create a pull request:</h4>
+            <ol className="text-sm text-blue-800 space-y-1">
+              <li>1. Click "Quick Fill Hello World" to populate the form</li>
+              <li>2. Create a new branch using the "Create" button</li>
+              <li>3. <strong>Go to GitHub and make some changes to that branch</strong></li>
+              <li>4. Come back and submit the pull request</li>
+            </ol>
+            <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs text-yellow-800">
+              <strong>⚠️ Important:</strong> The head branch must have different commits than the base branch. If they're identical, you'll get a "No commits found" error.
+            </div>
+            <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-xs text-red-800">
+              <strong>🚨 Common Issue:</strong> If you get "No commits between branches" error, it means master and main are identical. You need to make actual changes to the head branch on GitHub first.
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleQuickFill}
+              className="btn-primary text-sm"
+            >
+              <PlusIcon className="h-4 w-4 mr-1" />
+              Quick Fill "Hello World"
+            </button>
+          </div>
+
+          {/* Branch Selection */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                From Branch (Head) *
+              </label>
+              <div className="flex space-x-2">
+                <select
+                  value={formData.head}
+                  onChange={(e) => setFormData(prev => ({ ...prev, head: e.target.value }))}
+                  className="input flex-1"
+                  required
+                  disabled={branchesLoading}
+                >
+                  <option value="">Select branch...</option>
+                  {branches.map((branch) => (
+                    <option key={branch.name} value={branch.name}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateBranch(!showCreateBranch)}
+                  className="btn-outline px-3"
+                  title="Create new branch"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                To Branch (Base)
+              </label>
+              <select
+                value={formData.base}
+                onChange={(e) => setFormData(prev => ({ ...prev, base: e.target.value }))}
+                className="input"
+                disabled={branchesLoading}
+              >
+                {branches.map((branch) => (
+                  <option key={branch.name} value={branch.name}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Create Branch Section */}
+          {showCreateBranch && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-2">Create New Branch</h4>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  placeholder="Branch name (e.g., feature/hello-world)"
+                  value={newBranchName}
+                  onChange={(e) => setNewBranchName(e.target.value)}
+                  className="input flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateBranch}
+                  disabled={createBranchMutation.isLoading}
+                  className="btn-primary"
+                >
+                  {createBranchMutation.isLoading ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Title *
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              className="input"
+              placeholder="Brief description of changes"
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              value={formData.body}
+              onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))}
+              className="input"
+              rows={8}
+              placeholder="Describe your changes in detail..."
+            />
+          </div>
+
+          {/* Draft Option */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="draft"
+              checked={formData.draft}
+              onChange={(e) => setFormData(prev => ({ ...prev, draft: e.target.checked }))}
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label htmlFor="draft" className="ml-2 block text-sm text-gray-900">
+              Create as draft pull request
+            </label>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-outline"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createPRMutation.isLoading}
+              className="btn-primary"
+            >
+              {createPRMutation.isLoading ? 'Creating...' : 'Create Pull Request'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default CreatePullRequestModal;

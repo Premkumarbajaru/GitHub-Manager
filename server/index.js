@@ -30,10 +30,25 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // CORS configuration
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      process.env.CLIENT_URL || 'http://localhost:3000',
+      'http://localhost:3000'
+    ];
+    
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json());
@@ -61,6 +76,11 @@ app.use(passport.session());
 // Routes
 app.use('/auth', authRoutes);
 app.use('/api', apiRoutes);
+
+// Root route - redirect to frontend
+app.get('/', (req, res) => {
+  res.redirect(process.env.CLIENT_URL || 'http://localhost:3000');
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {

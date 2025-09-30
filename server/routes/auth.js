@@ -10,6 +10,12 @@ router.get('/test', (req, res) => {
 // GitHub OAuth login
 router.get('/github', (req, res, next) => {
   console.log('GitHub OAuth initiated with scopes: repo, user:email, read:org');
+  
+  // Store the returnTo URL in session if provided
+  if (req.query.returnTo) {
+    req.session.returnTo = req.query.returnTo;
+  }
+  
   passport.authenticate('github', { 
     scope: ['repo', 'user:email', 'read:org'] 
   })(req, res, next);
@@ -23,18 +29,53 @@ router.get('/github/callback',
     // Check for error in callback
     if (req.query.error) {
       console.error('GitHub OAuth error:', req.query.error, req.query.error_description);
-      return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_error&message=${req.query.error_description || req.query.error}`);
+      return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=oauth_error&message=${encodeURIComponent(req.query.error_description || req.query.error)}`);
     }
     
+    // Get the returnTo URL from session or use default
+    const defaultReturnTo = `${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard`;
+    const returnTo = req.session.returnTo || defaultReturnTo;
+    
+    // Clear the returnTo from session
+    if (req.session.returnTo) {
+      delete req.session.returnTo;
+    }
+    
+    // Log the redirect URL for debugging
+    console.log('Redirecting after successful auth to:', returnTo);
+    
+    // Use a custom callback to handle the authentication
     passport.authenticate('github', { 
-      failureRedirect: `${process.env.CLIENT_URL}/login?error=auth_failed`,
-      failureFlash: false
+      failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=auth_failed`,
+      failureFlash: false,
+      session: true
+    }, (err, user, info) => {
+      if (err) {
+        console.error('Authentication error:', err);
+        return next(err);
+      }
+      if (!user) {
+        console.error('Authentication failed:', info);
+        return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=auth_failed`);
+      }
+      
+      // Log in the user
+      req.logIn(user, (err) => {
+        if (err) {
+          console.error('Login error:', err);
+          return next(err);
+        }
+        
+        // Successful authentication, redirect to the return URL
+        console.log('Authentication successful for user:', user.username);
+        return res.redirect(returnTo);
+      });
     })(req, res, next);
   },
+  // This should not be reached if the above works correctly
   (req, res) => {
-    // Successful authentication
-    console.log('Authentication successful for user:', req.user?.username);
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+    console.log('Fallback redirect for user:', req.user?.username);
+    res.redirect(process.env.CLIENT_URL || 'http://localhost:3000');
   }
 );
 

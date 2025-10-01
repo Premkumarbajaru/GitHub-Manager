@@ -33,7 +33,9 @@ app.use(limiter);
 const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:3000',
   'http://localhost:3000',
-  'http://127.0.0.1:3000'
+  'http://127.0.0.1:3000',
+  'https://github-manager-ggjc.onrender.com',
+  'https://github-manager-9hf4.onrender.com'
 ];
 
 // CORS middleware

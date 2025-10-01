@@ -2,22 +2,21 @@ const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
 const User = require('../models/User');
 
-// Determine callback URL based on environment
-const GITHUB_CALLBACK_URL = process.env.NODE_ENV === 'production'
-  ? 'https://github-manager-9hf4.onrender.com/auth/github/callback'
-  : 'http://localhost:5000/auth/github/callback';
-
+// Log configuration details
 console.log('Configuring GitHub OAuth with:', {
-  clientID: process.env.GITHUB_CLIENT_ID,
-  callbackURL: GITHUB_CALLBACK_URL,
+  clientID: process.env.GITHUB_CLIENT_ID ? '***' : 'Not set',
   hasClientSecret: !!process.env.GITHUB_CLIENT_SECRET,
-  nodeEnv: process.env.NODE_ENV || 'development'
+  nodeEnv: process.env.NODE_ENV || 'development',
+  callbackURL: process.env.GITHUB_CALLBACK_URL || 'Using dynamic URL based on environment'
 });
 
 passport.use(new GitHubStrategy({
   clientID: process.env.GITHUB_CLIENT_ID,
   clientSecret: process.env.GITHUB_CLIENT_SECRET,
-  callbackURL: GITHUB_CALLBACK_URL
+  callbackURL: process.env.GITHUB_CALLBACK_URL || 
+    (process.env.NODE_ENV === 'production' 
+      ? 'https://github-manager-9hf4.onrender.com/auth/github/callback'
+      : 'http://localhost:5000/auth/github/callback')
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     console.log('GitHub OAuth callback received for user:', profile.username);

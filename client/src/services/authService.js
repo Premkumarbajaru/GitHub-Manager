@@ -1,55 +1,67 @@
-import axios from 'axios';
-
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 class AuthService {
   constructor() {
-    this.api = axios.create({
-      baseURL: API_URL,
-      withCredentials: true,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Add response interceptor to handle errors
-    this.api.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        // Don't log 401 errors as they're expected when not authenticated
-        if (error.response?.status !== 401) {
-          if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
-            console.error('API Error:', error.response.data);
-            console.error('Status:', error.response.status);
-          } else if (error.request) {
-            // The request was made but no response was received
-            console.error('No response received:', error.request);
-          } else {
-            // Something happened in setting up the request that triggered an Error
-            console.error('Error:', error.message);
+    this.api = {
+      get: async (url, config = {}) => {
+        const response = await fetch(`${API_URL}${url}`, {
+          ...config,
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...(config.headers || {})
           }
-        }
-        return Promise.reject(error);
+        });
+        return this.handleResponse(response);
+      },
+      post: async (url, data = {}, config = {}) => {
+        const response = await fetch(`${API_URL}${url}`, {
+          ...config,
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...(config.headers || {})
+          },
+          body: JSON.stringify(data)
+        });
+        return this.handleResponse(response);
       }
-    );
+    };
+  }
+
+  async handleResponse(response) {
+    const contentType = response.headers.get('content-type');
+    const isJson = contentType && contentType.includes('application/json');
+    const data = isJson ? await response.json() : await response.text();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Return a resolved promise for 401 errors
+        return { data: { authenticated: false, user: null } };
+      }
+      
+      const error = new Error(data.message || 'An error occurred');
+      error.response = { data, status: response.status };
+      throw error;
+    }
+
+    return { data };
   }
 
   async getAuthStatus() {
     try {
-      const response = await this.api.get('/auth/status', {
-        // Don't throw on 401 status as it's expected when not authenticated
-        validateStatus: (status) => status === 200 || status === 401
-      });
-      
-      // If we get a 401, return unauthenticated state
-      if (response.status === 401) {
+      const response = await this.api.get('/auth/status');
+      // If we get here, the request was successful
+      return response.data || { authenticated: false, user: null };
+    } catch (error) {
+      // Handle network errors or other exceptions
+      if (error.response?.status === 401) {
         return { authenticated: false, user: null };
       }
-      
-      return response.data;
-    } catch (error) {
       console.error('Auth status check failed:', error);
       return { authenticated: false, user: null };
     }

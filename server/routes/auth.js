@@ -81,35 +81,74 @@ router.get('/github/callback',
 
 // Logout
 router.post('/logout', (req, res) => {
+  // Store a reference to the session before destroying it
+  const sessionId = req.sessionID;
+  
   req.logout((err) => {
     if (err) {
       console.error('Logout error:', err);
       return res.status(500).json({ error: 'Failed to logout' });
     }
     
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Session destroy error:', err);
-        return res.status(500).json({ error: 'Failed to destroy session' });
-      }
-      
-      res.clearCookie('connect.sid');
-      res.status(200).json({ message: 'Logged out successfully' });
-    });
+    // Manually clear the session store
+    if (req.sessionStore && req.sessionStore.destroy) {
+      req.sessionStore.destroy(sessionId, (err) => {
+        if (err) {
+          console.error('Session store destroy error:', err);
+        }
+        
+        // Clear the session cookie
+        res.clearCookie('connect.sid', {
+          path: '/',
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        });
+        
+        res.status(200).json({ message: 'Logged out successfully' });
+      });
+    } else {
+      // Fallback if sessionStore.destroy is not available
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Session destroy error:', err);
+          return res.status(500).json({ error: 'Failed to destroy session' });
+        }
+        
+        res.clearCookie('connect.sid', {
+          path: '/',
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        });
+        
+        res.status(200).json({ message: 'Logged out successfully' });
+      });
+    }
   });
 });
 
 // Check authentication status
 router.get('/status', (req, res) => {
-  if (req.isAuthenticated()) {
+  try {
+    if (req.isAuthenticated() && req.user) {
+      return res.status(200).json({ 
+        authenticated: true, 
+        user: req.user.getPublicProfile ? req.user.getPublicProfile() : req.user
+      });
+    }
+    
+    // If not authenticated, return 200 with authenticated: false
     res.status(200).json({ 
-      authenticated: true, 
-      user: req.user.getPublicProfile() 
-    });
-  } else {
-    res.status(401).json({ 
       authenticated: false, 
       user: null 
+    });
+  } catch (error) {
+    console.error('Error in /status endpoint:', error);
+    res.status(200).json({ 
+      authenticated: false, 
+      user: null,
+      error: 'Error checking authentication status'
     });
   }
 });

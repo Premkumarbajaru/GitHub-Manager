@@ -7,11 +7,20 @@ jest.mock('../services/authService', () => ({
   __esModule: true,
   default: {
     getAuthStatus: jest.fn().mockResolvedValue({
-      isAuthenticated: false,
+      authenticated: false,
       user: null,
     }),
     logout: jest.fn().mockResolvedValue({ success: true }),
     getLoginUrl: jest.fn(() => '/auth/github'),
+    api: {
+      get: jest.fn(),
+      post: jest.fn(),
+      interceptors: {
+        response: {
+          use: jest.fn(),
+        },
+      },
+    },
   },
 }));
 

@@ -1,16 +1,28 @@
 import React from 'react';
-import { render, act } from '@testing-library/react';
+import { render, act, RenderResult } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '../contexts/AuthContext';
 
+// Mock window.scrollTo
+window.scrollTo = jest.fn();
+
 // Create a custom render function that includes providers
-export const renderWithProviders = (ui, options = {}) => {
+export const renderWithProviders = (
+  ui,
+  {
+    route = '/',
+    initialEntries = ['/'],
+    ...renderOptions
+  } = {}
+) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         retry: false,
         cacheTime: 0,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
       mutations: {
         retry: false,
@@ -18,17 +30,26 @@ export const renderWithProviders = (ui, options = {}) => {
     },
   });
 
-  const AllProviders = ({ children }) => (
+  const Wrapper = ({ children }) => (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <AuthProvider>
-          {children}
+          <Routes>
+            <Route path="*" element={children} />
+          </Routes>
         </AuthProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 
-  return render(ui, { wrapper: AllProviders, ...options });
+  // Return the render result and query client for testing
+  const result = render(ui, { wrapper: Wrapper, ...renderOptions });
+  
+  return {
+    ...result,
+    queryClient,
+    history: { push: jest.fn() },
+  };
 };
 
 // Helper to flush React state updates in tests using react-query

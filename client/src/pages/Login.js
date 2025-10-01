@@ -1,21 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { FiGitPullRequest, FiGitMerge, FiUsers, FiClock } from 'react-icons/fi';
 
 const Login = () => {
   const { login, loginLoading } = useAuth();
   const [searchParams] = useSearchParams();
-  const [currentSlogan, setCurrentSlogan] = useState(0);
-
-  const slogans = [
-    "Where Code Meets Collaboration",
-    "Unleash Your Development Potential", 
-    "Build the Future, One Commit at a Time",
-    "Code Together, Ship Faster",
-    "Your Gateway to Open Source Excellence"
-  ];
 
   useEffect(() => {
     const error = searchParams.get('error');
@@ -30,132 +22,112 @@ const Login = () => {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlogan((prev) => (prev + 1) % slogans.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [slogans.length]);
+  const features = [
+    {
+      icon: <FiGitPullRequest className="w-6 h-6" />,
+      title: "Pull Request Management",
+      description: "Easily track, review, and manage all your pull requests in one place.",
+      color: "from-blue-400 to-blue-600",
+      border: "border-blue-500/40"
+    },
+    {
+      icon: <FiGitMerge className="w-6 h-6" />,
+      title: "Real-time Sync",
+      description: "Live synchronization with GitHub repositories",
+      color: "from-purple-400 to-purple-600",
+      border: "border-purple-500/40"
+    },
+    {
+      icon: <FiUsers className="w-6 h-6" />,
+      title: "Team Collaboration",
+      description: "Collaborate with your team through code reviews and discussions.",
+      color: "from-green-400 to-green-600",
+      border: "border-green-500/40"
+    },
+    {
+      icon: <FiClock className="w-6 h-6" />,
+      title: "Time Tracking",
+      description: "Track time spent on PRs and manage your development workflow efficiently.",
+      color: "from-amber-400 to-amber-600",
+      border: "border-amber-500/40"
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-cyan-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-40 right-32 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute bottom-32 left-1/3 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-2000"></div>
-
-        {/* Floating Code Symbols */}
-        <div className="absolute top-1/4 left-1/4 text-cyan-400/30 text-6xl font-mono animate-bounce delay-500">{'<>'}</div>
-        <div className="absolute top-1/3 right-1/4 text-purple-400/30 text-4xl font-mono animate-bounce delay-1000">{'{ }'}</div>
-        <div className="absolute bottom-1/3 left-1/5 text-pink-400/30 text-5xl font-mono animate-bounce delay-1500">{'[]'}</div>
-        <div className="absolute bottom-1/4 right-1/3 text-green-400/30 text-3xl font-mono animate-bounce delay-2000">{'()'}</div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
+      {/* GitHub-like dot pattern background */}
+      <div className="absolute inset-0 opacity-10">
+        <div 
+          className="absolute inset-0" 
+          style={{
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.4\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E")',
+            backgroundSize: '20px 20px'
+          }} 
+        />
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-8">
-        <div className="w-full max-w-lg">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="relative inline-block mb-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-purple-600 rounded-full blur-xl opacity-75 animate-pulse"></div>
-              <div className="relative bg-white p-4 rounded-full border-2 border-cyan-400/50 flex items-center space-x-2 shadow-2xl">
-                <svg className="h-10 w-10 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-                <span className="text-lg font-bold text-gray-900">GitHub PR Manager</span>
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <div 
+            key={i}
+            className="absolute rounded-full bg-white/5"
+            style={{
+              width: Math.random() * 200 + 50,
+              height: Math.random() * 200 + 50,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              filter: 'blur(40px)',
+              opacity: Math.random() * 0.1 + 0.05,
+              animation: `pulse ${Math.random() * 10 + 10}s infinite alternate`
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+          {/* Left Column - Feature Cards */}
+          <div className="space-y-6">
+            <div className="text-center md:text-left mb-8">
+              <div className="flex items-center justify-center md:justify-start space-x-3 mb-4">
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg">
+                  <FiGitPullRequest className="w-8 h-8 text-white" />
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  GitHub PR Manager
+                </h1>
               </div>
-            </div>
-
-            {/* Main Title */}
-            <h1 className="text-4xl lg:text-5xl font-black mb-4 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              GitHub PR Manager
-            </h1>
-
-            {/* Rotating Slogans */}
-            <div className="h-16 mb-6 flex items-center justify-center">
-              <p className="text-lg lg:text-xl font-semibold text-transparent bg-gradient-to-r from-cyan-300 to-purple-300 bg-clip-text transition-all duration-1000 transform">
-                {slogans[currentSlogan]}
+              <p className="text-gray-300 text-lg max-w-md mx-auto md:mx-0">
+                Streamline your GitHub workflow with powerful pull request management tools
               </p>
             </div>
-          </div>
 
-          {/* Feature Cards */}
-          <div className="grid grid-cols-1 gap-4 mb-8">
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 rounded-xl blur-lg group-hover:blur-xl transition-all duration-500"></div>
-              <div className="relative bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-lg border-2 border-cyan-500/40 rounded-xl p-4 hover:border-cyan-400/70 hover:scale-105 transition-all duration-500 shadow-2xl hover:shadow-cyan-500/20">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-lg flex items-center justify-center shadow-lg">
-                    <span className="text-lg">🚀</span>
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-lg mb-1">Lightning Fast</h3>
-                    <div className="w-6 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"></div>
+            {/* Feature Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {features.map((feature, index) => (
+                <div 
+                  key={index}
+                  className={`relative group bg-gray-800/50 backdrop-blur-md rounded-xl p-5 border ${feature.border} hover:shadow-lg hover:scale-[1.02] transition-all duration-300 overflow-hidden`}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                  <div className="relative z-10">
+                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3`}>
+                      {feature.icon}
+                    </div>
+                    <h3 className="text-white font-semibold text-lg mb-1">{feature.title}</h3>
+                    <p className="text-gray-300 text-sm">{feature.description}</p>
                   </div>
                 </div>
-                <p className="text-gray-300 text-sm leading-relaxed ml-11">Blazing fast repository browsing and PR management</p>
-              </div>
-            </div>
-
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-xl blur-lg group-hover:blur-xl transition-all duration-500"></div>
-              <div className="relative bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-lg border-2 border-purple-500/40 rounded-xl p-4 hover:border-purple-400/70 hover:scale-105 transition-all duration-500 shadow-2xl hover:shadow-purple-500/20">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                    <span className="text-lg">🔒</span>
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-lg mb-1">Secure OAuth</h3>
-                    <div className="w-6 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
-                  </div>
-                </div>
-                <p className="text-gray-300 text-sm leading-relaxed ml-11">Enterprise-grade security with GitHub OAuth</p>
-              </div>
-            </div>
-
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-pink-500/30 to-cyan-500/30 rounded-xl blur-lg group-hover:blur-xl transition-all duration-500"></div>
-              <div className="relative bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-lg border-2 border-pink-500/40 rounded-xl p-4 hover:border-pink-400/70 hover:scale-105 transition-all duration-500 shadow-2xl hover:shadow-pink-500/20">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-pink-600 rounded-lg flex items-center justify-center shadow-lg">
-                    <span className="text-lg">⚡</span>
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-lg mb-1">Real-time Sync</h3>
-                    <div className="w-6 h-0.5 bg-gradient-to-r from-pink-400 to-cyan-400 rounded-full"></div>
-                  </div>
-                </div>
-                <p className="text-gray-300 text-sm leading-relaxed ml-11">Live synchronization with GitHub repositories</p>
-              </div>
-            </div>
-
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500/30 to-cyan-500/30 rounded-xl blur-lg group-hover:blur-xl transition-all duration-500"></div>
-              <div className="relative bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-lg border-2 border-green-500/40 rounded-xl p-4 hover:border-green-400/70 hover:scale-105 transition-all duration-500 shadow-2xl hover:shadow-green-500/20">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
-                    <span className="text-lg">🎯</span>
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-lg mb-1">Smart Analytics</h3>
-                    <div className="w-6 h-0.5 bg-gradient-to-r from-green-400 to-cyan-400 rounded-full"></div>
-                  </div>
-                </div>
-                <p className="text-gray-300 text-sm leading-relaxed ml-11">Intelligent insights for development workflow</p>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Login Card */}
+          {/* Right Column - Login Card */}
           <div className="relative">
-            {/* Enhanced Neon Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/30 via-purple-500/30 to-pink-500/30 rounded-2xl blur-2xl"></div>
-
-            <div className="relative bg-gray-900/90 backdrop-blur-xl border border-cyan-500/40 rounded-2xl p-6 shadow-2xl">
+            <div className="relative bg-gray-900/90 backdrop-blur-xl border border-cyan-500/40 rounded-2xl p-8 shadow-2xl">
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-white mb-2">
-                  Welcome Back
-                </h2>
+                <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
                 <p className="text-gray-300 text-base">
                   Connect with GitHub to unlock your potential
                 </p>

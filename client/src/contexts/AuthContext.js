@@ -25,32 +25,75 @@ export const AuthProvider = ({ children }) => {
   // Check authentication status on mount and when location changes
   useEffect(() => {
     let isMounted = true;
+    let authCheckTimeout;
     
     const handleAuthCheck = async () => {
       if (!isMounted) return;
       
       try {
-        const { authenticated, user } = await authService.getAuthStatus();
+        // Add a small delay to prevent rapid consecutive checks
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         if (!isMounted) return;
         
-        setUser(authenticated ? user : null);
+        const authResult = await authService.getAuthStatus();
         
-        // If user is not authenticated and on a protected route, redirect to login
-        const isLoginPage = location.pathname === '/login';
-        if (!authenticated && !isLoginPage) {
-          navigate('/login', { 
-            state: { from: location },
-            replace: true 
-          });
+        if (!isMounted) return;
+        
+        const { authenticated, user } = authResult || {};
+        
+        // Update user state if it has changed
+        setUser(prevUser => {
+          if (!authenticated) return null;
+          const userChanged = (!prevUser && user) || (prevUser?.id !== user?.id);
+          return userChanged ? user : prevUser;
+        });
+        
+        // Determine if current page is an auth page
+        const isAuthPage = ['/login', '/register', '/forgot-password'].includes(
+          location.pathname
+        );
+        
+        if (!authenticated) {
+          // Only redirect if not already on an auth page and not in the middle of a redirect
+          if (!isAuthPage && !location.state?.isRedirect) {
+            navigate('/login', { 
+              state: { from: location, isRedirect: true },
+              replace: true 
+            });
+          }
+        } else if (isAuthPage) {
+          // If user is authenticated but on auth page, redirect to home or previous page
+          const from = location.state?.from?.pathname || '/';
+          // Only navigate if we're not already there to prevent infinite loops
+          if (location.pathname !== from) {
+            navigate(from, { replace: true });
+          }
         }
       } catch (error) {
         if (isMounted) {
+          console.error('Authentication check error:', error);
           setUser(null);
+          
+          // Only redirect if not already on login page and not a redirect
+          if (location.pathname !== '/login' && !location.state?.isRedirect) {
+            navigate('/login', { 
+              state: { from: location, isRedirect: true },
+              replace: true 
+            });
+          }
         }
       } finally {
         if (isMounted) {
-          setLoading(false);
+          // Clear any existing timeout
+          if (authCheckTimeout) clearTimeout(authCheckTimeout);
+          
+          // Add a small delay before setting loading to false to prevent flickering
+          authCheckTimeout = setTimeout(() => {
+            if (isMounted) {
+              setLoading(false);
+            }
+          }, 300);
         }
       }
     };
@@ -68,6 +111,9 @@ export const AuthProvider = ({ children }) => {
     window.addEventListener('popstate', handlePopState);
     return () => {
       isMounted = false;
+      if (authCheckTimeout) {
+        clearTimeout(authCheckTimeout);
+      }
       window.removeEventListener('popstate', handlePopState);
     };
   }, [location, navigate, loading]);
@@ -75,22 +121,13 @@ export const AuthProvider = ({ children }) => {
   const checkAuthStatus = useCallback(async () => {
     try {
       // Only set loading if not already loading
-      setLoading(prev => prev ? prev : true);
+      setLoading(true);
       
       const { authenticated, user } = await authService.getAuthStatus();
-      
-      // Only update state if the authentication status has changed
-      setUser(prevUser => {
-        const userChanged = !prevUser && user || prevUser?.id !== user?.id;
-        return userChanged ? user : prevUser;
-      });
-      
+      setUser(authenticated ? user : null);
       return authenticated;
     } catch (error) {
-      // Don't log 401 errors as they're expected when not authenticated
-      if (error.response?.status !== 401) {
-        console.error('Auth status check failed:', error);
-      }
+      console.error('Error checking auth status:', error);
       setUser(null);
       return false;
     } finally {
@@ -98,12 +135,12 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = useCallback(() => {
+  const login = useCallback((redirectPath) => {
     try {
       setLoginLoading(true);
       
-      // Store the current location to redirect back after login
-      const returnTo = location.state?.from?.pathname || 
+      // Use provided redirect path or default to current location or dashboard
+      const returnTo = redirectPath || 
                       (window.location.pathname !== '/login' ? 
                        window.location.pathname + window.location.search : 
                        '/dashboard');

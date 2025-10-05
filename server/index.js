@@ -31,11 +31,7 @@ app.use(limiter);
 
 // CORS configuration
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:3000',
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'https://github-manager-ggjc.onrender.com',
-  'https://github-manager-9hf4.onrender.com'
+  process.env.CLIENT_URL
 ];
 
 // CORS middleware
@@ -99,7 +95,7 @@ app.use('/api', apiRoutes);
 
 // Root route - redirect to frontend
 app.get('/', (req, res) => {
-  res.redirect(process.env.CLIENT_URL || 'http://localhost:3000');
+  res.redirect(process.env.CLIENT_URL);
 });
 
 // Health check endpoint
@@ -133,7 +129,7 @@ app.use('*', (req, res) => {
   }
   
   // For all other routes, redirect to frontend
-  const frontendUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const frontendUrl = process.env.CLIENT_URL;
   console.log(`Redirecting frontend route ${req.path} to ${frontendUrl}${req.path}`);
   res.redirect(`${frontendUrl}${req.path}`);
 });
@@ -155,7 +151,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/github-pr
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Frontend URL: ${process.env.CLIENT_URL || 'http://localhost:3000'}`);
+  console.log(`Frontend URL: ${process.env.CLIENT_URL}`);
 });
 
 // Graceful shutdown

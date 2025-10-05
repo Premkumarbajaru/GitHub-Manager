@@ -4,18 +4,17 @@ const getApiUrl = () => {
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
-  
+
   // In production, use the Render backend URL
   if (process.env.NODE_ENV === 'production') {
     return 'https://github-manager-9hf4.onrender.com';
   }
-  
-  // Development fallback
-  return 'http://localhost:5000';
+
+  // Development - use relative URLs to work with proxy
+  return '';
 };
 
 const API_URL = getApiUrl();
-
 // Debug logging
 console.log('AuthService API URL:', API_URL);
 console.log('Environment:', process.env.NODE_ENV);
@@ -25,7 +24,8 @@ class AuthService {
   constructor() {
     this.api = {
       get: async (url, config = {}) => {
-        const response = await fetch(`${API_URL}${url}`, {
+        const fullUrl = API_URL ? `${API_URL}${url}` : url;
+        const response = await fetch(fullUrl, {
           ...config,
           method: 'GET',
           credentials: 'include',
@@ -38,7 +38,8 @@ class AuthService {
         return this.handleResponse(response);
       },
       post: async (url, data = {}, config = {}) => {
-        const response = await fetch(`${API_URL}${url}`, {
+        const fullUrl = API_URL ? `${API_URL}${url}` : url;
+        const response = await fetch(fullUrl, {
           ...config,
           method: 'POST',
           credentials: 'include',
@@ -75,7 +76,8 @@ class AuthService {
 
   async getAuthStatus() {
     try {
-      console.log('Making auth status request to:', `${API_URL}/auth/status`);
+      const requestUrl = API_URL ? `${API_URL}/auth/status` : '/auth/status';
+      console.log('Making auth status request to:', requestUrl);
       const response = await this.api.get('/auth/status');
       console.log('Auth status response:', response.data);
       // If we get here, the request was successful
@@ -102,7 +104,7 @@ class AuthService {
 
   // Get GitHub OAuth URL
   getGitHubAuthUrl() {
-    const authUrl = `${API_URL}/auth/github`;
+    const authUrl = API_URL ? `${API_URL}/auth/github` : '/auth/github';
     console.log('GitHub OAuth URL:', authUrl);
     return authUrl;
   }

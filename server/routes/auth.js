@@ -29,11 +29,11 @@ router.get('/github/callback',
     // Check for error in callback
     if (req.query.error) {
       console.error('GitHub OAuth error:', req.query.error, req.query.error_description);
-      return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=oauth_error&message=${encodeURIComponent(req.query.error_description || req.query.error)}`);
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_error&message=${encodeURIComponent(req.query.error_description || req.query.error)}`);
     }
     
     // Get the returnTo URL from session or use default
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const clientUrl = process.env.CLIENT_URL;
     const defaultReturnTo = `${clientUrl}/dashboard`;
     const returnTo = req.session.returnTo || defaultReturnTo;
     
@@ -52,7 +52,7 @@ router.get('/github/callback',
     
     // Use a custom callback to handle the authentication
     passport.authenticate('github', { 
-      failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=auth_failed`,
+      failureRedirect: `${process.env.CLIENT_URL}/login?error=auth_failed`,
       failureFlash: false,
       session: true
     }, (err, user, info) => {
@@ -62,7 +62,7 @@ router.get('/github/callback',
       }
       if (!user) {
         console.error('Authentication failed:', info);
-        return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=auth_failed`);
+        return res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
       }
       
       // Log in the user
@@ -81,7 +81,7 @@ router.get('/github/callback',
   // This should not be reached if the above works correctly
   (req, res) => {
     console.log('Fallback redirect for user:', req.user?.username);
-    res.redirect(process.env.CLIENT_URL || 'http://localhost:3000');
+    res.redirect(process.env.CLIENT_URL);
   }
 );
 

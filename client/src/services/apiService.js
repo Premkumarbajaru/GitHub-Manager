@@ -12,8 +12,8 @@ const getApiUrl = () => {
     return 'https://github-manager-9hf4.onrender.com';
   }
   
-  // Development fallback
-  return 'http://localhost:5000';
+  // Development - use relative URLs to work with proxy
+  return '';
 };
 
 class ApiService {

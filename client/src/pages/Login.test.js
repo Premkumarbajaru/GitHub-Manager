@@ -28,12 +28,14 @@ describe('Login Page', () => {
 
   it('displays welcome message', () => {
     renderLogin();
-    expect(screen.getByText(/Where Code Meets Collaboration/i)).toBeInTheDocument();
+    expect(screen.getByText(/Streamline your GitHub workflow/i)).toBeInTheDocument();
   });
 
   it('displays features list', () => {
     renderLogin();
-    expect(screen.getByText(/Lightning Fast/i)).toBeInTheDocument();
-    expect(screen.getByText(/Secure OAuth/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Pull Request Management/i)).toHaveLength(2); // One in description, one in feature card
+    expect(screen.getByText(/Real-time Sync/i)).toBeInTheDocument();
+    expect(screen.getByText(/Team Collaboration/i)).toBeInTheDocument();
+    expect(screen.getByText(/Time Tracking/i)).toBeInTheDocument();
   });
 });

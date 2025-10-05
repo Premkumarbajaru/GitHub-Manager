@@ -1,6 +1,14 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
+
+// Mock react-router-dom
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null }),
+  useNavigate: () => jest.fn(),
+}));
 
 // Mock authService
 jest.mock('../services/authService', () => ({
@@ -40,9 +48,11 @@ describe('AuthContext', () => {
 
   it('provides auth context to children', () => {
     render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      </BrowserRouter>
     );
 
     expect(screen.getByTestId('loading')).toBeInTheDocument();

@@ -1,5 +1,6 @@
 import React from 'react';
 import { renderHook } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import { useAuth } from './useAuth';
 import { AuthProvider } from '../contexts/AuthContext';
 
@@ -7,14 +8,31 @@ import { AuthProvider } from '../contexts/AuthContext';
 jest.mock('../services/authService', () => ({
   __esModule: true,
   default: {
-    getAuthStatus: jest.fn(),
-    logout: jest.fn(),
-    getLoginUrl: jest.fn(() => '/auth/github'),
+    getAuthStatus: jest.fn(() => Promise.resolve({ authenticated: false, user: null })),
+    logout: jest.fn(() => Promise.resolve()),
+    getGitHubAuthUrl: jest.fn(() => '/auth/github'),
   },
 }));
 
+// Mock react-router-dom
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useLocation: () => ({ pathname: '/', state: null }),
+  useNavigate: () => jest.fn(),
+}));
+
+// Mock react-hot-toast
+jest.mock('react-hot-toast', () => ({
+  success: jest.fn(),
+  error: jest.fn(),
+}));
+
 describe('useAuth Hook', () => {
-  const wrapper = ({ children }) => <AuthProvider>{children}</AuthProvider>;
+  const wrapper = ({ children }) => (
+    <BrowserRouter>
+      <AuthProvider>{children}</AuthProvider>
+    </BrowserRouter>
+  );
 
   it('provides auth context', () => {
     const { result } = renderHook(() => useAuth(), { wrapper });

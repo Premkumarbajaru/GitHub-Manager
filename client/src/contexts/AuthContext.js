@@ -36,11 +36,14 @@ export const AuthProvider = ({ children }) => {
         
         if (!isMounted) return;
         
+        console.log('Checking auth status, current location:', location.pathname);
+        console.log('Current URL:', window.location.href);
         const authResult = await authService.getAuthStatus();
         
         if (!isMounted) return;
         
         const { authenticated, user } = authResult || {};
+        console.log('Auth result:', { authenticated, user: user ? user.username : null });
         
         // Update user state if it has changed
         setUser(prevUser => {
@@ -57,6 +60,7 @@ export const AuthProvider = ({ children }) => {
         if (!authenticated) {
           // Only redirect if not already on an auth page and not in the middle of a redirect
           if (!isAuthPage && !location.state?.isRedirect) {
+            console.log('User not authenticated, redirecting to login');
             navigate('/login', { 
               state: { from: location, isRedirect: true },
               replace: true 
@@ -65,6 +69,7 @@ export const AuthProvider = ({ children }) => {
         } else if (isAuthPage) {
           // If user is authenticated but on auth page, redirect to home or previous page
           const from = location.state?.from?.pathname || '/';
+          console.log('User authenticated, redirecting from', location.pathname, 'to', from);
           // Only navigate if we're not already there to prevent infinite loops
           if (location.pathname !== from) {
             navigate(from, { replace: true });
@@ -151,6 +156,7 @@ export const AuthProvider = ({ children }) => {
       // Get the GitHub OAuth URL
       const authUrl = authService.getGitHubAuthUrl();
       console.log('Redirecting to GitHub OAuth:', authUrl);
+      console.log('Return URL will be:', returnTo);
       
       // Use window.location.replace to prevent back button issues
       window.location.replace(authUrl);

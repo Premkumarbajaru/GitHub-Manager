@@ -1,9 +1,25 @@
 import axios from 'axios';
 
+// Determine API URL based on environment
+const getApiUrl = () => {
+  // If REACT_APP_API_URL is set, use it
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // In production, use the Render backend URL
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://github-manager-9hf4.onrender.com';
+  }
+  
+  // Development fallback
+  return 'http://localhost:5000';
+};
+
 class ApiService {
   constructor() {
     this.api = axios.create({
-      baseURL: process.env.REACT_APP_API_URL || '',
+      baseURL: getApiUrl(),
       withCredentials: true,
       headers: {
         'Content-Type': 'application/json',

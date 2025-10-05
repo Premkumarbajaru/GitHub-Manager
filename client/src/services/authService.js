@@ -1,4 +1,25 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Determine API URL based on environment
+const getApiUrl = () => {
+  // If REACT_APP_API_URL is set, use it
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // In production, use the Render backend URL
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://github-manager-9hf4.onrender.com';
+  }
+  
+  // Development fallback
+  return 'http://localhost:5000';
+};
+
+const API_URL = getApiUrl();
+
+// Debug logging
+console.log('AuthService API URL:', API_URL);
+console.log('Environment:', process.env.NODE_ENV);
+console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
 
 class AuthService {
   constructor() {
@@ -54,15 +75,17 @@ class AuthService {
 
   async getAuthStatus() {
     try {
+      console.log('Making auth status request to:', `${API_URL}/auth/status`);
       const response = await this.api.get('/auth/status');
+      console.log('Auth status response:', response.data);
       // If we get here, the request was successful
       return response.data || { authenticated: false, user: null };
     } catch (error) {
+      console.error('Auth status check failed:', error);
       // Handle network errors or other exceptions
       if (error.response?.status === 401) {
         return { authenticated: false, user: null };
       }
-      console.error('Auth status check failed:', error);
       return { authenticated: false, user: null };
     }
   }
@@ -79,7 +102,9 @@ class AuthService {
 
   // Get GitHub OAuth URL
   getGitHubAuthUrl() {
-    return `${API_URL}/auth/github`;
+    const authUrl = `${API_URL}/auth/github`;
+    console.log('GitHub OAuth URL:', authUrl);
+    return authUrl;
   }
 }
 

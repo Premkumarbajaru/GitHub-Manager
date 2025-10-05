@@ -33,8 +33,12 @@ router.get('/github/callback',
     }
     
     // Get the returnTo URL from session or use default
-    const defaultReturnTo = `${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard`;
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const defaultReturnTo = `${clientUrl}/dashboard`;
     const returnTo = req.session.returnTo || defaultReturnTo;
+    
+    // Ensure no double slashes in the URL
+    const cleanReturnTo = returnTo.replace(/([^:]\/)\/+/g, '$1');
     
     // Clear the returnTo from session
     if (req.session.returnTo) {
@@ -42,7 +46,9 @@ router.get('/github/callback',
     }
     
     // Log the redirect URL for debugging
-    console.log('Redirecting after successful auth to:', returnTo);
+    console.log('Redirecting after successful auth to:', cleanReturnTo);
+    console.log('Client URL:', clientUrl);
+    console.log('Original returnTo:', returnTo);
     
     // Use a custom callback to handle the authentication
     passport.authenticate('github', { 
@@ -68,7 +74,7 @@ router.get('/github/callback',
         
         // Successful authentication, redirect to the return URL
         console.log('Authentication successful for user:', user.username);
-        return res.redirect(returnTo);
+        return res.redirect(cleanReturnTo);
       });
     })(req, res, next);
   },

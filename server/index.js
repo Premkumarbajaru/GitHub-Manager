@@ -73,7 +73,8 @@ const sessionConfig = {
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    domain: process.env.NODE_ENV === 'production' ? '.yourdomain.com' : undefined
+    // Remove domain restriction for cross-origin requests
+    domain: undefined
   }
 };
 
@@ -81,6 +82,9 @@ const sessionConfig = {
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
   sessionConfig.cookie.secure = true;
+} else {
+  // In development, trust proxy to avoid rate limiting warnings
+  app.set('trust proxy', 1);
 }
 
 app.use(session(sessionConfig));
@@ -116,9 +120,22 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API route not found' });
+});
+
+// Catch-all for frontend routes - redirect to frontend
 app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  // If it's an API request, return 404
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  
+  // For all other routes, redirect to frontend
+  const frontendUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  console.log(`Redirecting frontend route ${req.path} to ${frontendUrl}${req.path}`);
+  res.redirect(`${frontendUrl}${req.path}`);
 });
 
 // Database connection

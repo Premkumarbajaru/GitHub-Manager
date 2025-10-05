@@ -1,20 +1,6 @@
-// Determine API URL based on environment
-const getApiUrl = () => {
-  // If REACT_APP_API_URL is set, use it
-  if (process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
-  }
+// Directly use REACT_APP_API_URL from .env file
+const API_URL = process.env.REACT_APP_API_URL;
 
-  // In production, use the Render backend URL
-  if (process.env.NODE_ENV === 'production') {
-    return 'https://github-manager-9hf4.onrender.com';
-  }
-
-  // Development - use relative URLs to work with proxy
-  return '';
-};
-
-const API_URL = getApiUrl();
 // Debug logging
 console.log('AuthService API URL:', API_URL);
 console.log('Environment:', process.env.NODE_ENV);
@@ -24,7 +10,7 @@ class AuthService {
   constructor() {
     this.api = {
       get: async (url, config = {}) => {
-        const fullUrl = API_URL ? `${API_URL}${url}` : url;
+        const fullUrl = `${API_URL}${url}`;
         const response = await fetch(fullUrl, {
           ...config,
           method: 'GET',
@@ -38,7 +24,7 @@ class AuthService {
         return this.handleResponse(response);
       },
       post: async (url, data = {}, config = {}) => {
-        const fullUrl = API_URL ? `${API_URL}${url}` : url;
+        const fullUrl = `${API_URL}${url}`;
         const response = await fetch(fullUrl, {
           ...config,
           method: 'POST',
@@ -76,7 +62,7 @@ class AuthService {
 
   async getAuthStatus() {
     try {
-      const requestUrl = API_URL ? `${API_URL}/auth/status` : '/auth/status';
+      const requestUrl = `${API_URL}/auth/status`;
       console.log('Making auth status request to:', requestUrl);
       const response = await this.api.get('/auth/status');
       console.log('Auth status response:', response.data);
@@ -104,7 +90,7 @@ class AuthService {
 
   // Get GitHub OAuth URL
   getGitHubAuthUrl() {
-    const authUrl = API_URL ? `${API_URL}/auth/github` : '/auth/github';
+    const authUrl = `${API_URL}/auth/github`;
     console.log('GitHub OAuth URL:', authUrl);
     return authUrl;
   }

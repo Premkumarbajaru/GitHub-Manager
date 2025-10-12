@@ -17,15 +17,11 @@ const queryClient = new QueryClient({
   },
 });
 
-// Get the basename from environment or default to empty string
-const basename = process.env.PUBLIC_URL || '';
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter
-        basename={basename}
         future={{
           v7_startTransition: true,
           v7_relativeSplatPath: true

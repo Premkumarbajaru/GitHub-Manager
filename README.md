@@ -34,7 +34,7 @@ GitHub-Manager/
 - **Framer Motion** - Animation library for smooth transitions
 - **React Hot Toast** - Toast notifications
 - **Heroicons** - Icon library
-- **Jest + React Testing Library** - Testing framework
+- **Jest** - Testing framework
 
 **Backend (`server/`)**
 - **Node.js + Express** - RESTful API server

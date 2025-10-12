@@ -45,7 +45,7 @@ GitHub-Manager/
 - **Helmet** - Security headers
 - **CORS** - Cross-origin resource sharing
 - **Rate Limiting** - API rate limiting protection
-- **Jest + Supertest** - API testing framework
+- **Jest** - testing framework
 
 ## 📁 Detailed File Structure
 

@@ -11,7 +11,6 @@ GitHub PR Manager is a sophisticated web application that allows users to:
 - **Manage pull requests** with full CRUD operations
 - **Create new pull requests** with branch management
 - **Comment on pull requests** and view discussion threads
-- **Real-time updates** with modern UI/UX patterns
 
 ## 🏗️ Architecture
 

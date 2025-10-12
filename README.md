@@ -57,7 +57,6 @@ client/
 │   ├── index.html           # Main HTML template
 │   ├── favicon.ico          # App icon
 │   ├── manifest.json        # PWA manifest
-│   └── _redirects           # Netlify redirects for SPA
 ├── src/
 │   ├── components/          # Reusable UI components
 │   │   ├── CreatePullRequestModal.js    # Modal for creating PRs
@@ -108,7 +107,6 @@ server/
 │   └── auth.js              # Authentication routes
 ├── services/                # Business logic layer
 │   └── githubService.js     # GitHub API integration
-├── coverage/                # Test coverage reports
 ├── index.js                 # Server entry point
 └── package.json             # Backend dependencies and scripts
 ```
@@ -144,7 +142,7 @@ server/
 
 ### Prerequisites
 - Node.js (v16 or higher)
-- MongoDB (local or cloud instance)
+- MongoDB (cloud instance)
 - GitHub OAuth App credentials
 
 ### Installation
